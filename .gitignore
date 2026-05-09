@@ -1,0 +1,46 @@
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Build results
+[Bb]in/
+[Oo]bj/
+
+# Visual Studio cache/options
+*.VC.db
+*.VC.VC.opendb
+
+# Rider
+.idea/
+*.sln.iml
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+python-env/
+venv/
+ENV/
+env/
+
+# NuGet
+*.nupkg
+packages/
+.project.lock.json
+project.lock.json
+.nuget/
+
+# npm
+node_modules/
+
+# Logs
+*.log
+
+# OS Files
+Thumbs.db
+Desktop.ini
