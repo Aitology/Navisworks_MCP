@@ -1,6 +1,6 @@
 # Navisworks MCP Bridge
 
-> Control Autodesk Navisworks from Claude — clash detection, selection sets, search sets, viewpoints, properties, color overrides, and 30+ other operations — through the Model Context Protocol.
+> Control Autodesk Navisworks from Claude — clash detection, clash grouping, selection sets, search sets, viewpoints, properties, color overrides, and 30+ other operations — through the Model Context Protocol.
 
 <p align="center">
   <img src="docs/architecture.svg" alt="Architecture diagram" width="100%">
@@ -114,7 +114,7 @@ Invoke-RestMethod http://localhost:8765/health
 # ok      : True
 # version : 2.1
 # port    : 8765
-# routes  : 35
+# routes  : 40
 ```
 
 ### 4. Wire into Claude Desktop
@@ -152,7 +152,7 @@ For other MCP clients (Claude Code, Cline, Continue, etc.) the config schema is 
 
 If the handler throws, the addin returns HTTP 500 with `{error, detail, path}`, and `server_http.py` surfaces that body verbatim — no information loss.
 
-## Available tools (35)
+## Available tools (40)
 
 Argument names below are the **MCP tool argument names** (what the LLM sees). The addin's HTTP body uses some shorter aliases — `server_http.py` does the rename.
 
@@ -174,6 +174,16 @@ Argument names below are the **MCP tool argument names** (what the LLM sees). Th
 | `run_clash_test` | — | Run one test by `test_name`, or all tests if omitted. |
 | `get_clash_results` | `test_name` | Result list with status, distance, items. |
 | `delete_clash_test` | `test_name` | Remove a test by name. |
+
+### Clash groups
+
+| Tool | Required args | Purpose |
+|---|---|---|
+| `create_clash_group` | `test_name`, `group_name` | Create an empty clash group inside an existing test. Refuses duplicate names within the same test. |
+| `list_clash_groups` | `test_name` | All groups in a test, with each group's status and child clash names. |
+| `add_clashes_to_group` | `test_name`, `group_name`, `clash_names[]` | Move ungrouped clash results into an existing group. Per-clash interleaved copy-then-remove avoids the Navisworks GUID-uniqueness constraint. |
+| `set_clash_group_status` | `test_name`, `group_name`, `status` | Mark a group (and propagate to its child clashes) as `New`, `Active`, `Reviewed`, `Approved`, or `Resolved`. Uses `TestsEditResultStatus` under the hood. |
+| `delete_clash_group` | `test_name`, `group_name` | Remove a group (and its child results) from a test. |
 
 ### Selection sets / search sets
 
@@ -232,6 +242,15 @@ Edit the `Port` constant near the top of `addin/MCPBridgePlugin.cs`, recompile, 
 **HTTP 500 on every call.**
 Check `%TEMP%\navisworks_mcp_addin.log`. Most often the message is `no active document` — open a model file and retry.
 
+**`add_clashes_to_group` returns "Contains an item whose GUID is already present in the group".**
+This indicates the handler tried to add a clash copy while the original was still in the test tree — which can't happen with the shipping code (it removes the original first). If you see it after a code change, check that the order in `ClashGroupAddClashes` is still `CreateCopy → TestsRemoveAt → TestsAddCopy`.
+
+**`set_clash_group_status` returns "Object is Read-Only".**
+The handler is trying to assign `Status` directly on a resolved `ClashResultGroup`, which is read-only. Use `dc.TestsData.TestsEditResultStatus(group, status, assignee)` instead — the shipping `ClashGroupSetStatus` already does this.
+
+**Clash groups disappear after restart.**
+Navisworks doesn't auto-save clash data. After grouping or statusing clashes via MCP, **save the `.nwf` / `.nwd`** in Navisworks (`File → Save`) before closing — otherwise the groups are lost on reload.
+
 **Claude shows the navisworks server but no tools list it.**
 The Python server probably crashed on startup. Run it manually to see the error:
 ```powershell
@@ -258,7 +277,8 @@ Navisworks_MCP/
 │   ├── architecture.svg
 │   └── connection-flow.svg
 ├── addin/                             ← the .NET in-process plugin
-│   ├── MCPBridgePlugin.cs             ← ~1700 LOC: HTTP listener, router, 35 handlers
+│   ├── MCPBridgePlugin.cs             ← HTTP listener, router, base handlers
+│   ├── ClashGroupHandlers.cs          ← partial Handlers — clash group operations
 │   ├── MCPBridge.addin                ← Navisworks plugin manifest
 │   ├── NavisworksMcpAddin.csproj
 │   ├── NavisworksMcpAddin.sln
@@ -279,15 +299,25 @@ The plugin's design rules:
 - **Zero NuGet runtime dependencies.** JSON parsing and serialization are hand-rolled (`Json` class). The reason is that Navisworks loads its own copy of various BCL assemblies in-process; pulling in `System.Text.Json` or Newtonsoft would mean fighting version conflicts at load time.
 - **Every handler is single-threaded.** Add new handlers as static methods on `Handlers` and dispatch them through `RunOnUi` in `MCPBridgePlugin.Dispatch`.
 - **Throw on error.** The dispatcher converts exceptions into HTTP 500 + JSON. Don't swallow.
-- **Use `SavedItemReference` for clash tests.** Direct `ClashTest` references obtained from `Children` go stale after iteration — capture a `SavedItemReference` and re-resolve before each operation. See `ClashSetSelections` for the pattern.
+- **Use `SavedItemReference` for clash items.** Direct `ClashTest` / `ClashResult` / `ClashResultGroup` references obtained from `Children` go stale after iteration or after any mutating `Tests…` call. Capture a `SavedItemReference` and re-resolve before each operation. See `ClashSetSelections` and `ClashGroupAddClashes` for the pattern.
 
-Adding a new MCP tool is two edits:
+### Clash-API quirks worth knowing
 
-1. New case in `addin/MCPBridgePlugin.cs` `Dispatch` switch + a static method on `Handlers`.
+These show up the moment you write a new clash handler. All three are settled in the shipping code:
+
+- **GUID uniqueness.** A `ClashResult` has a stable GUID tied to its underlying clash pair, and the entire test tree refuses to contain two items with the same GUID. When "moving" a clash into a group, **remove the original first**, then add the orphan copy — never the other way around. `CreateCopy()` yields an orphan with a fresh GUID that survives the remove.
+- **Read-only resolved handles.** Items returned by `ResolveReference` reject direct property setters (`group.Status = …` throws "Object is Read-Only"). Use the dedicated `DocumentClashTests` method for the mutation you want — for status changes that's `TestsEditResultStatus(IClashResult, ClashResultStatus, Assignee)`. `ClashResultGroup` implements `IClashResult`, so the same call works on groups and individual results.
+- **Edit methods are typed, not generic.** `TestsEditTestFromCopy(ClashTest, ClashTest)` only edits tests, not groups or results. There's no generic `EditFromCopy` overload. When in doubt, reflection-list the methods on `DocumentClashTests` — that's how the existing code base was discovered.
+
+### Adding a new MCP tool
+
+Two edits:
+
+1. New case in `addin/MCPBridgePlugin.cs` `Dispatch` switch + a static method on `Handlers` (or extend the partial class in `ClashGroupHandlers.cs` if it's a clash-group operation).
 2. New `Tool(...)` entry in `addin/server_http.py` `TOOLS` and a corresponding `ROUTES` line.
 
 Recompile, redeploy, restart the MCP client.
 
 ## License
 
-MIT.
+Aitology
