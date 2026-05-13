@@ -142,7 +142,47 @@ TOOLS = [
          inputSchema={"type": "object", "properties": {
              "test_name": {"type": "string"}
          }, "required": ["test_name"]}),
+    Tool(name="create_clash_group",
+     description="Create an (empty) clash group inside an existing clash test.",
+     inputSchema={"type": "object", "properties": {
+         "test_name":  {"type": "string"},
+         "group_name": {"type": "string"},
+     }, "required": ["test_name", "group_name"]}),
+Tool(name="list_clash_groups",
+     description="List clash groups inside a clash test, with the names of their child clash results.",
+     inputSchema={"type": "object", "properties": {
+         "test_name": {"type": "string"},
+     }, "required": ["test_name"]}),
+Tool(name="delete_clash_group",
+     description="Delete a clash group (and its child results) from a clash test.",
+     inputSchema={"type": "object", "properties": {
+         "test_name":  {"type": "string"},
+         "group_name": {"type": "string"},
+     }, "required": ["test_name", "group_name"]}),
+Tool(name="add_clashes_to_group",
+         description=("Move existing (ungrouped) clash results from a clash test "
+                      "into one of its clash groups. Already-grouped clashes are "
+                      "left alone; pass them by their display name (e.g. 'Clash1')."),
+         inputSchema={"type": "object", "properties": {
+             "test_name":   {"type": "string"},
+             "group_name":  {"type": "string"},
+             "clash_names": {
+                 "type": "array",
+                 "items": {"type": "string"},
+                 "description": "Display names of clashes to move into the group."
+             },
+         }, "required": ["test_name", "group_name", "clash_names"]}),
+Tool(name="set_clash_group_status",
+         description=("Set the review status of a clash group "
+                      "(New | Active | Reviewed | Approved | Resolved)."),
+         inputSchema={"type": "object", "properties": {
+             "test_name":  {"type": "string"},
+             "group_name": {"type": "string"},
+             "status":     {"type": "string",
+                            "enum": ["New", "Active", "Reviewed", "Approved", "Resolved"]},
+         }, "required": ["test_name", "group_name", "status"]}),
 
+ 
     # ── Selection / Search sets ────────────────────────────────────
     Tool(name="list_sets",
          description="List all selection sets and search sets.",
@@ -289,6 +329,11 @@ ROUTES: dict[str, str] = {
     "run_clash_test":            "/clash/run",
     "get_clash_results":         "/clash/results",
     "delete_clash_test":         "/clash/delete",
+    "create_clash_group":        "/clash/group/create",
+"list_clash_groups":         "/clash/group/list",
+"delete_clash_group":        "/clash/group/delete",
+  "add_clashes_to_group":      "/clash/group/add-clashes",
+   "set_clash_group_status":    "/clash/group/set-status",
 
     "list_sets":                 "/sets/list",
     "create_selection_set":      "/sets/selection/create",

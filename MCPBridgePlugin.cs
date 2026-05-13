@@ -64,16 +64,16 @@ namespace NavisworksMcpAddin
     public class MCPBridgePlugin : AddInPlugin
     {
         // ── Configuration ───────────────────────────────────────────────────
-        private const int    Port    = 8765;
+        private const int Port = 8765;
         private const string Version = "2.1";
         private static readonly string LogPath =
             Path.Combine(Path.GetTempPath(), "navisworks_mcp_addin.log");
 
         // ── State ───────────────────────────────────────────────────────────
-        private static HttpListener           _listener;
-        private static Thread                 _listenerThread;
+        private static HttpListener _listener;
+        private static Thread _listenerThread;
         private static SynchronizationContext _uiContext;
-        private static readonly object        _startLock = new object();
+        private static readonly object _startLock = new object();
 
         // ─────────────────────────────────────────────────────────────────────
         //  Plugin lifecycle
@@ -212,7 +212,7 @@ namespace NavisworksMcpAddin
                 {
                     Respond(ctx, 500, new
                     {
-                        error  = ex.GetType().Name,
+                        error = ex.GetType().Name,
                         detail = ex.Message,
                         path
                     });
@@ -245,52 +245,57 @@ namespace NavisworksMcpAddin
                 switch (path)
                 {
                     // Document
-                    case "/document/info":          return Handlers.DocumentInfo();
-                    case "/document/statistics":    return Handlers.DocumentStatistics();
+                    case "/document/info": return Handlers.DocumentInfo();
+                    case "/document/statistics": return Handlers.DocumentStatistics();
 
                     // Selection
-                    case "/selection/get":          return Handlers.SelectionGet();
-                    case "/selection/select-all":   return Handlers.SelectionSelectAll();
+                    case "/selection/get": return Handlers.SelectionGet();
+                    case "/selection/select-all": return Handlers.SelectionSelectAll();
                     case "/selection/deselect-all": return Handlers.SelectionDeselectAll();
-                    case "/selection/invert":       return Handlers.SelectionInvert();
-                    case "/selection/from-set":     return Handlers.SelectionFromSet(body);
-                    case "/selection/by-name":      return Handlers.SelectionByName(body);
+                    case "/selection/invert": return Handlers.SelectionInvert();
+                    case "/selection/from-set": return Handlers.SelectionFromSet(body);
+                    case "/selection/by-name": return Handlers.SelectionByName(body);
 
                     // Sets
-                    case "/sets/list":              return Handlers.SetsList();
-                    case "/sets/selection/create":  return Handlers.SelectionSetCreate(body);
-                    case "/sets/search/create":     return Handlers.SearchSetCreate(body);
-                    case "/sets/delete":            return Handlers.SetDelete(body);
-                    case "/sets/items":             return Handlers.SetItems(body);
-                    case "/sets/search/run":        return Handlers.SearchSetRun(body);
+                    case "/sets/list": return Handlers.SetsList();
+                    case "/sets/selection/create": return Handlers.SelectionSetCreate(body);
+                    case "/sets/search/create": return Handlers.SearchSetCreate(body);
+                    case "/sets/delete": return Handlers.SetDelete(body);
+                    case "/sets/items": return Handlers.SetItems(body);
+                    case "/sets/search/run": return Handlers.SearchSetRun(body);
 
                     // Find / properties
-                    case "/elements/find":          return Handlers.ElementsFind(body);
-                    case "/elements/find-by-name":  return Handlers.ElementsFindByName(body);
-                    case "/elements/properties":    return Handlers.ElementsProperties(body);
+                    case "/elements/find": return Handlers.ElementsFind(body);
+                    case "/elements/find-by-name": return Handlers.ElementsFindByName(body);
+                    case "/elements/properties": return Handlers.ElementsProperties(body);
 
                     // Overrides
-                    case "/elements/color":             return Handlers.ElementsColor(body);
-                    case "/elements/transparency":      return Handlers.ElementsTransparency(body);
-                    case "/elements/hide":              return Handlers.ElementsHide();
-                    case "/elements/unhide-all":        return Handlers.ElementsUnhideAll();
-                    case "/elements/isolate":           return Handlers.ElementsIsolate();
-                    case "/elements/reset-overrides":   return Handlers.ElementsResetOverrides();
+                    case "/elements/color": return Handlers.ElementsColor(body);
+                    case "/elements/transparency": return Handlers.ElementsTransparency(body);
+                    case "/elements/hide": return Handlers.ElementsHide();
+                    case "/elements/unhide-all": return Handlers.ElementsUnhideAll();
+                    case "/elements/isolate": return Handlers.ElementsIsolate();
+                    case "/elements/reset-overrides": return Handlers.ElementsResetOverrides();
 
                     // Clash
-                    case "/clash/list":             return Handlers.ClashList();
-                    case "/clash/create":           return Handlers.ClashCreate(body);
-                    case "/clash/set-selections":   return Handlers.ClashSetSelections(body);
-                    case "/clash/run":              return Handlers.ClashRun(body);
-                    case "/clash/results":          return Handlers.ClashResults(body);
-                    case "/clash/delete":           return Handlers.ClashDelete(body);
+                    case "/clash/list": return Handlers.ClashList();
+                    case "/clash/create": return Handlers.ClashCreate(body);
+                    case "/clash/set-selections": return Handlers.ClashSetSelections(body);
+                    case "/clash/run": return Handlers.ClashRun(body);
+                    case "/clash/results": return Handlers.ClashResults(body);
+                    case "/clash/delete": return Handlers.ClashDelete(body);
+                    case "/clash/group/create": return Handlers.ClashGroupCreate(body);
+                    case "/clash/group/list": return Handlers.ClashGroupList(body);
+                    case "/clash/group/delete": return Handlers.ClashGroupDelete(body);
+                    case "/clash/group/add-clashes": return Handlers.ClashGroupAddClashes(body);
+                    case "/clash/group/set-status": return Handlers.ClashGroupSetStatus(body);
 
                     // Viewpoints
-                    case "/viewpoints/list":        return Handlers.ViewpointsList();
-                    case "/viewpoints/save":        return Handlers.ViewpointSave(body);
-                    case "/viewpoints/goto":        return Handlers.ViewpointGoto(body);
-                    case "/viewpoints/delete":      return Handlers.ViewpointDelete(body);
-                    case "/viewpoints/current":     return Handlers.ViewpointCurrent();
+                    case "/viewpoints/list": return Handlers.ViewpointsList();
+                    case "/viewpoints/save": return Handlers.ViewpointSave(body);
+                    case "/viewpoints/goto": return Handlers.ViewpointGoto(body);
+                    case "/viewpoints/delete": return Handlers.ViewpointDelete(body);
+                    case "/viewpoints/current": return Handlers.ViewpointCurrent();
 
                     default:
                         throw new InvalidOperationException($"unknown route: {path}");
@@ -346,8 +351,8 @@ namespace NavisworksMcpAddin
         private static void Respond(HttpListenerContext ctx, int statusCode, object payload)
         {
             byte[] data = Encoding.UTF8.GetBytes(Json.Serialize(payload));
-            ctx.Response.StatusCode      = statusCode;
-            ctx.Response.ContentType     = "application/json; charset=utf-8";
+            ctx.Response.StatusCode = statusCode;
+            ctx.Response.ContentType = "application/json; charset=utf-8";
             ctx.Response.ContentLength64 = data.Length;
             ctx.Response.OutputStream.Write(data, 0, data.Length);
             ctx.Response.OutputStream.Close();
@@ -374,7 +379,7 @@ namespace NavisworksMcpAddin
     //  the Navisworks API. Throw on bad input or missing document; the
     //  dispatcher converts the exception into a 500 JSON response.
     // =========================================================================
-    internal static class Handlers
+    internal static partial class Handlers
     {
         // ════════════════════════════════════════════════════════════════════
         //  DOCUMENT
@@ -389,18 +394,18 @@ namespace NavisworksMcpAddin
             {
                 models.Add(new
                 {
-                    name       = m.RootItem?.DisplayName ?? "",
-                    fileName   = m.FileName ?? "",
+                    name = m.RootItem?.DisplayName ?? "",
+                    fileName = m.FileName ?? "",
                     sourceFile = m.SourceFileName ?? ""
                 });
             }
 
             return new
             {
-                title      = doc.Title,
-                fileName   = doc.FileName,
-                units      = doc.Units.ToString(),
-                isClear    = doc.IsClear,
+                title = doc.Title,
+                fileName = doc.FileName,
+                units = doc.Units.ToString(),
+                isClear = doc.IsClear,
                 modelCount = doc.Models.Count,
                 models
             };
@@ -443,14 +448,14 @@ namespace NavisworksMcpAddin
             var sample = selected.Take(limit).Select(it => new
             {
                 displayName = it.DisplayName,
-                className   = it.ClassDisplayName
+                className = it.ClassDisplayName
             }).ToList();
 
             return new
             {
-                count   = selected.Count,
+                count = selected.Count,
                 sampled = sample.Count,
-                items   = sample
+                items = sample
             };
         }
 
@@ -547,7 +552,8 @@ namespace NavisworksMcpAddin
                         // search-based (the search will be re-evaluated when used).
                         if (!set.HasSearch)
                         {
-                            list.Add(new {
+                            list.Add(new
+                            {
                                 name = prefix + set.DisplayName,
                                 type = "selection",
                                 count = set.ExplicitModelItems.Count
@@ -555,7 +561,8 @@ namespace NavisworksMcpAddin
                         }
                         else
                         {
-                            list.Add(new {
+                            list.Add(new
+                            {
                                 name = prefix + set.DisplayName,
                                 type = "search"
                             });
@@ -596,12 +603,12 @@ namespace NavisworksMcpAddin
         {
             var doc = RequireDocument();
 
-            string name     = GetString(body, "name", null)
+            string name = GetString(body, "name", null)
                 ?? throw new ArgumentException("name is required");
             string category = GetString(body, "category", "Item");
             string property = GetString(body, "property", "Name");
-            string op       = GetString(body, "operator", "contains");
-            string value    = GetString(body, "value", "");
+            string op = GetString(body, "operator", "contains");
+            string value = GetString(body, "value", "");
 
             var search = new Search();
             search.Selection.SelectAll();
@@ -643,15 +650,15 @@ namespace NavisworksMcpAddin
             var sample = items.Take(limit).Select(it => new
             {
                 displayName = it.DisplayName,
-                className   = it.ClassDisplayName
+                className = it.ClassDisplayName
             }).ToList();
 
             return new
             {
                 name,
-                count   = items.Count,
+                count = items.Count,
                 sampled = sample.Count,
-                items   = sample
+                items = sample
             };
         }
 
@@ -688,10 +695,10 @@ namespace NavisworksMcpAddin
 
             string category = GetString(body, "category", "Item");
             string property = GetString(body, "property", "Name");
-            string op       = GetString(body, "operator", "contains");
-            string value    = GetString(body, "value", "");
-            int    limit    = GetInt(body, "limit", 50);
-            bool   select   = GetBool(body, "select", false);
+            string op = GetString(body, "operator", "contains");
+            string value = GetString(body, "value", "");
+            int limit = GetInt(body, "limit", 50);
+            bool select = GetBool(body, "select", false);
 
             var search = new Search();
             search.Selection.SelectAll();
@@ -705,14 +712,14 @@ namespace NavisworksMcpAddin
             var sample = results.Take(limit).Select(it => new
             {
                 displayName = it.DisplayName,
-                className   = it.ClassDisplayName
+                className = it.ClassDisplayName
             }).ToList();
 
             return new
             {
-                count    = results.Count,
-                sampled  = sample.Count,
-                items    = sample,
+                count = results.Count,
+                sampled = sample.Count,
+                items = sample,
                 selected = select
             };
         }
@@ -722,7 +729,7 @@ namespace NavisworksMcpAddin
             var doc = RequireDocument();
             string pattern = GetString(body, "pattern", null)
                 ?? throw new ArgumentException("pattern is required");
-            int  limit  = GetInt(body, "limit", 50);
+            int limit = GetInt(body, "limit", 50);
             bool select = GetBool(body, "select", false);
 
             var found = new ModelItemCollection();
@@ -740,15 +747,15 @@ namespace NavisworksMcpAddin
             var sample = found.Take(limit).Select(it => new
             {
                 displayName = it.DisplayName,
-                className   = it.ClassDisplayName
+                className = it.ClassDisplayName
             }).ToList();
 
             return new
             {
                 pattern,
-                count    = found.Count,
-                sampled  = sample.Count,
-                items    = sample,
+                count = found.Count,
+                sampled = sample.Count,
+                items = sample,
                 selected = select
             };
         }
@@ -804,7 +811,7 @@ namespace NavisworksMcpAddin
             return new
             {
                 displayName = target.DisplayName,
-                className   = target.ClassDisplayName,
+                className = target.ClassDisplayName,
                 categories
             };
         }
@@ -931,11 +938,11 @@ namespace NavisworksMcpAddin
 
                 tests.Add(new
                 {
-                    name      = t.DisplayName,
-                    type      = t.TestType.ToString(),
+                    name = t.DisplayName,
+                    type = t.TestType.ToString(),
                     tolerance = t.Tolerance,
-                    status    = t.Status.ToString(),
-                    results   = resultCount
+                    status = t.Status.ToString(),
+                    results = resultCount
                 });
             }
 
@@ -946,19 +953,19 @@ namespace NavisworksMcpAddin
         {
             var doc = RequireDocument();
 
-            string name      = GetString(body, "name", "Test " + DateTime.Now.ToString("yyyyMMdd-HHmmss"));
-            string typeStr   = GetString(body, "type", "Hard");
+            string name = GetString(body, "name", "Test " + DateTime.Now.ToString("yyyyMMdd-HHmmss"));
+            string typeStr = GetString(body, "type", "Hard");
             double tolerance = GetDouble(body, "tolerance", 0.001);
-            string setA      = GetString(body, "selectionA", null);
-            string setB      = GetString(body, "selectionB", null);
+            string setA = GetString(body, "selectionA", null);
+            string setB = GetString(body, "selectionB", null);
 
             DocumentClash dc = doc.GetClash();
 
             var test = new ClashTest
             {
                 DisplayName = name,
-                TestType    = ParseClashType(typeStr),
-                Tolerance   = tolerance
+                TestType = ParseClashType(typeStr),
+                Tolerance = tolerance
             };
 
             int itemsA = 0, itemsB = 0;
@@ -981,9 +988,9 @@ namespace NavisworksMcpAddin
 
             return new
             {
-                name       = test.DisplayName,
-                type       = test.TestType.ToString(),
-                tolerance  = test.Tolerance,
+                name = test.DisplayName,
+                type = test.TestType.ToString(),
+                tolerance = test.Tolerance,
                 selectionA = setA,
                 selectionB = setB,
                 itemsA,
@@ -1129,7 +1136,7 @@ namespace NavisworksMcpAddin
             {
                 name,
                 status,
-                count   = results.Count,
+                count = results.Count,
                 sampled = Math.Min(results.Count, limit),
                 results = results.Take(limit).ToList()
             };
@@ -1406,7 +1413,7 @@ namespace NavisworksMcpAddin
                     string.Equals(t.DisplayName, name, StringComparison.OrdinalIgnoreCase))
                 {
                     foundParent = parent;
-                    foundIndex  = i;
+                    foundIndex = i;
                     return true;
                 }
                 if (si is GroupItem g &&
@@ -1436,11 +1443,11 @@ namespace NavisworksMcpAddin
             {
                 output.Add(new
                 {
-                    name     = r.DisplayName,
-                    status   = r.Status.ToString(),
+                    name = r.DisplayName,
+                    status = r.Status.ToString(),
                     distance = r.Distance,
-                    item1    = r.Item1?.DisplayName,
-                    item2    = r.Item2?.DisplayName
+                    item1 = r.Item1?.DisplayName,
+                    item2 = r.Item2?.DisplayName
                 });
             }
             else if (item is GroupItem g)
@@ -1454,7 +1461,7 @@ namespace NavisworksMcpAddin
             if (string.IsNullOrEmpty(s)) return ClashTestType.Hard;
             switch (s.Trim().ToLowerInvariant())
             {
-                case "hard":      return ClashTestType.Hard;
+                case "hard": return ClashTestType.Hard;
                 case "clearance": return ClashTestType.Clearance;
                 case "duplicate": return ClashTestType.Duplicate;
                 default:
@@ -1477,8 +1484,8 @@ namespace NavisworksMcpAddin
         {
             if (body == null || !body.TryGetValue(key, out object v) || v == null) return @default;
             if (v is double d) return (int)d;
-            if (v is long l)   return (int)l;
-            if (v is int i)    return i;
+            if (v is long l) return (int)l;
+            if (v is int i) return i;
             if (int.TryParse(v.ToString(), NumberStyles.Integer, CultureInfo.InvariantCulture, out int j)) return j;
             return @default;
         }
@@ -1487,8 +1494,8 @@ namespace NavisworksMcpAddin
         {
             if (body == null || !body.TryGetValue(key, out object v) || v == null) return @default;
             if (v is double d) return d;
-            if (v is long l)   return (double)l;
-            if (v is int i)    return (double)i;
+            if (v is long l) return (double)l;
+            if (v is int i) return (double)i;
             if (double.TryParse(v.ToString(), NumberStyles.Float, CultureInfo.InvariantCulture, out double e)) return e;
             return @default;
         }
@@ -1537,14 +1544,14 @@ namespace NavisworksMcpAddin
 
             switch (v)
             {
-                case string s:    WriteString(sb, s); return;
-                case bool b:      sb.Append(b ? "true" : "false"); return;
-                case int i:       sb.Append(i.ToString(CultureInfo.InvariantCulture)); return;
-                case long l:      sb.Append(l.ToString(CultureInfo.InvariantCulture)); return;
-                case double d:    sb.Append(FormatDouble(d)); return;
-                case float f:     sb.Append(FormatDouble(f)); return;
-                case decimal m:   sb.Append(m.ToString(CultureInfo.InvariantCulture)); return;
-                case Enum e:      WriteString(sb, e.ToString()); return;
+                case string s: WriteString(sb, s); return;
+                case bool b: sb.Append(b ? "true" : "false"); return;
+                case int i: sb.Append(i.ToString(CultureInfo.InvariantCulture)); return;
+                case long l: sb.Append(l.ToString(CultureInfo.InvariantCulture)); return;
+                case double d: sb.Append(FormatDouble(d)); return;
+                case float f: sb.Append(FormatDouble(f)); return;
+                case decimal m: sb.Append(m.ToString(CultureInfo.InvariantCulture)); return;
+                case Enum e: WriteString(sb, e.ToString()); return;
             }
 
             // Generic dictionary (e.g. Dictionary<string, object>)
@@ -1581,13 +1588,13 @@ namespace NavisworksMcpAddin
             {
                 switch (c)
                 {
-                    case '"':  sb.Append("\\\""); break;
+                    case '"': sb.Append("\\\""); break;
                     case '\\': sb.Append("\\\\"); break;
-                    case '\b': sb.Append("\\b");  break;
-                    case '\f': sb.Append("\\f");  break;
-                    case '\n': sb.Append("\\n");  break;
-                    case '\r': sb.Append("\\r");  break;
-                    case '\t': sb.Append("\\t");  break;
+                    case '\b': sb.Append("\\b"); break;
+                    case '\f': sb.Append("\\f"); break;
+                    case '\n': sb.Append("\\n"); break;
+                    case '\r': sb.Append("\\r"); break;
+                    case '\t': sb.Append("\\t"); break;
                     default:
                         if (c < 0x20) sb.AppendFormat(CultureInfo.InvariantCulture, "\\u{0:x4}", (int)c);
                         else sb.Append(c);
@@ -1724,14 +1731,14 @@ namespace NavisworksMcpAddin
                     char esc = s[i + 1];
                     switch (esc)
                     {
-                        case '"':  sb.Append('"'); i += 2; break;
+                        case '"': sb.Append('"'); i += 2; break;
                         case '\\': sb.Append('\\'); i += 2; break;
-                        case '/':  sb.Append('/'); i += 2; break;
-                        case 'b':  sb.Append('\b'); i += 2; break;
-                        case 'f':  sb.Append('\f'); i += 2; break;
-                        case 'n':  sb.Append('\n'); i += 2; break;
-                        case 'r':  sb.Append('\r'); i += 2; break;
-                        case 't':  sb.Append('\t'); i += 2; break;
+                        case '/': sb.Append('/'); i += 2; break;
+                        case 'b': sb.Append('\b'); i += 2; break;
+                        case 'f': sb.Append('\f'); i += 2; break;
+                        case 'n': sb.Append('\n'); i += 2; break;
+                        case 'r': sb.Append('\r'); i += 2; break;
+                        case 't': sb.Append('\t'); i += 2; break;
                         case 'u':
                             if (i + 5 < s.Length)
                             {
